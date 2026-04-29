@@ -1,0 +1,1262 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MBTI（政治学版） · PoliSci-MBTI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;600;900&family=Noto+Sans+SC:wght@300;400;500;700&family=Crimson+Pro:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #1a2e1f;          /* 深墨绿 */
+    --ink-soft: #2d4a37;
+    --paper: #f4ecd8;        /* 米白纸色 */
+    --paper-warm: #ebe1c8;
+    --accent: #8b1e2e;       /* 政治书刊红 */
+    --accent-soft: #b8344c;
+    --gold: #a07e2c;
+    --rule: #2d4a3722;
+    --shadow: 0 1px 0 #00000010, 0 8px 24px -12px #1a2e1f33;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Sans SC", "Inter", -apple-system, sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+
+  /* 纸张纹理 */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image:
+      radial-gradient(circle at 20% 30%, #00000005 1px, transparent 1px),
+      radial-gradient(circle at 70% 60%, #00000005 1px, transparent 1px);
+    background-size: 3px 3px, 5px 5px;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  /* 进度条 */
+  .progress-rail {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--rule);
+    z-index: 100;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--ink);
+    width: 0%;
+    transition: width .4s cubic-bezier(.4,0,.2,1);
+  }
+  .progress-text {
+    position: fixed;
+    top: 16px;
+    right: 24px;
+    font-family: "Crimson Pro", serif;
+    font-size: 13px;
+    letter-spacing: 0.08em;
+    color: var(--ink-soft);
+    z-index: 100;
+    font-feature-settings: "tnum";
+  }
+
+  /* 主容器 */
+  .stage {
+    position: relative;
+    z-index: 2;
+    min-height: 100vh;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 80px 32px 80px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  /* ========== INTRO 页 ========== */
+  .intro {
+    animation: fadeUp .8s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .intro-eyebrow {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0.18em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .intro-title {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: clamp(40px, 7vw, 64px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+  }
+  .intro-title .accent {
+    color: var(--accent);
+    font-style: italic;
+    font-family: "Crimson Pro", serif;
+    font-weight: 600;
+  }
+  .intro-subtitle {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-bottom: 40px;
+  }
+  .intro-rule {
+    width: 60px;
+    height: 2px;
+    background: var(--ink);
+    margin: 0 0 32px;
+  }
+  .intro-body {
+    font-size: 16px;
+    line-height: 1.8;
+    color: var(--ink-soft);
+    margin-bottom: 32px;
+    max-width: 580px;
+  }
+  .intro-body p + p { margin-top: 16px; }
+
+  .dimension-list {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px 32px;
+    margin: 40px 0 48px;
+    padding: 32px;
+    background: var(--paper-warm);
+    border-left: 3px solid var(--ink);
+  }
+  @media (max-width: 540px) {
+    .dimension-list { grid-template-columns: 1fr; }
+  }
+  .dim-item {
+    font-family: "Crimson Pro", serif;
+  }
+  .dim-letters {
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: var(--ink);
+    margin-bottom: 4px;
+  }
+  .dim-letters .slash { color: var(--accent); margin: 0 4px; }
+  .dim-name {
+    font-family: "Noto Sans SC", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+  }
+
+  .start-btn {
+    background: var(--ink);
+    color: var(--paper);
+    border: none;
+    padding: 18px 48px;
+    font-family: "Noto Sans SC", sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all .3s cubic-bezier(.2,.8,.2,1);
+    position: relative;
+    overflow: hidden;
+  }
+  .start-btn:hover {
+    background: var(--accent);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 16px -4px #1a2e1f44;
+  }
+  .start-btn::after {
+    content: "→";
+    margin-left: 12px;
+    display: inline-block;
+    transition: transform .3s;
+  }
+  .start-btn:hover::after { transform: translateX(4px); }
+
+  /* ========== QUESTION 页 ========== */
+  .question-page {
+    animation: fadeUp .5s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .q-meta {
+    display: flex;
+    align-items: baseline;
+    gap: 16px;
+    margin-bottom: 32px;
+  }
+  .q-number {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 64px;
+    font-weight: 600;
+    color: var(--accent);
+    line-height: 1;
+    font-feature-settings: "tnum";
+  }
+  .q-divider {
+    flex: 1;
+    height: 1px;
+    background: var(--ink);
+    margin-top: 32px;
+  }
+  .q-of {
+    font-family: "Crimson Pro", serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    letter-spacing: 0.1em;
+  }
+  .q-text {
+    font-family: "Noto Serif SC", serif;
+    font-size: clamp(20px, 3vw, 26px);
+    line-height: 1.5;
+    font-weight: 400;
+    margin-bottom: 48px;
+    color: var(--ink);
+  }
+
+  .answers {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .answer-btn {
+    background: transparent;
+    border: 1.5px solid var(--ink);
+    padding: 20px 28px;
+    text-align: left;
+    font-family: "Noto Sans SC", sans-serif;
+    font-size: 16px;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all .25s cubic-bezier(.2,.8,.2,1);
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: relative;
+  }
+  .answer-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+    transform: translateX(4px);
+  }
+  .answer-btn .marker {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-weight: 600;
+    color: var(--accent);
+    font-size: 18px;
+    width: 24px;
+    flex-shrink: 0;
+    transition: color .25s;
+  }
+  .answer-btn:hover .marker { color: var(--paper); }
+
+  /* 三个选项不同的视觉weight */
+  .answer-btn.agree { border-left-width: 5px; }
+  .answer-btn.neutral { border-style: dashed; }
+  .answer-btn.disagree { border-right-width: 5px; }
+
+  .answer-btn.selected {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .answer-btn.selected .marker { color: var(--paper); }
+
+  .nav-bar {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 32px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+  }
+  .nav-btn {
+    background: transparent;
+    border: none;
+    font-family: "Crimson Pro", serif;
+    font-size: 15px;
+    color: var(--ink-soft);
+    cursor: pointer;
+    padding: 8px 0;
+    letter-spacing: 0.05em;
+    transition: color .2s;
+  }
+  .nav-btn:hover:not(:disabled) { color: var(--accent); }
+  .nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  /* ========== RESULT 页 ========== */
+  .result-page {
+    animation: fadeUp .8s cubic-bezier(.2,.8,.2,1) both;
+    max-width: 760px;
+    padding-top: 60px;
+  }
+  .result-eyebrow {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  .type-display {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 900;
+    font-size: clamp(80px, 16vw, 144px);
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin-bottom: 8px;
+    color: var(--ink);
+    display: flex;
+    align-items: baseline;
+    gap: 4px;
+  }
+  .type-display .letter {
+    display: inline-block;
+    animation: dropIn .6s cubic-bezier(.2,.8,.2,1) both;
+  }
+  .type-display .letter.tie {
+    color: var(--ink-soft);
+    opacity: 0.5;
+    font-style: italic;
+    cursor: help;
+    text-decoration: underline dashed;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 8px;
+  }
+  .type-display .letter:nth-child(1) { animation-delay: .1s; }
+  .type-display .letter:nth-child(2) { animation-delay: .25s; }
+  .type-display .letter:nth-child(3) { animation-delay: .4s; }
+  .type-display .letter:nth-child(4) { animation-delay: .55s; }
+
+  .type-name {
+    font-family: "Noto Serif SC", serif;
+    font-weight: 600;
+    font-size: clamp(24px, 4vw, 32px);
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .type-name-en {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 18px;
+    color: var(--ink-soft);
+    margin-bottom: 8px;
+  }
+
+  .tie-notice {
+    font-family: "Noto Sans SC", sans-serif;
+    font-size: 13px;
+    color: var(--ink-soft);
+    line-height: 1.6;
+    padding: 12px 16px;
+    background: var(--paper-warm);
+    border-left: 2px solid var(--accent);
+    margin-bottom: 32px;
+    margin-top: 20px;
+    display: none;
+  }
+
+  /* 四维度分数条 */
+  .scores-block {
+    margin: 48px 0;
+    padding: 32px 0;
+    border-top: 2px solid var(--ink);
+    border-bottom: 1px solid var(--rule);
+  }
+  .scores-title {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 14px;
+    letter-spacing: 0.15em;
+    color: var(--ink-soft);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+  .score-row {
+    display: grid;
+    grid-template-columns: 88px 1fr 88px;
+    align-items: center;
+    margin-bottom: 24px;
+    gap: 16px;
+  }
+  .score-label {
+    font-family: "Noto Serif SC", serif;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .score-label.left { text-align: center; }
+  .score-label.right { text-align: center; }
+  .score-label .letter-big {
+    font-family: "Crimson Pro", serif;
+    font-size: 24px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--ink-soft);
+    opacity: 0.45;
+    transition: all .3s;
+  }
+  .score-label.on .letter-big {
+    color: var(--ink);
+    opacity: 1;
+  }
+  .score-label.tie .letter-big {
+    color: var(--ink-soft);
+    opacity: 0.7;
+    font-style: italic;
+  }
+  .score-label .score-pct {
+    font-family: "Crimson Pro", serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--ink-soft);
+    line-height: 1;
+    font-feature-settings: "tnum";
+    opacity: 0.5;
+    transition: all .3s;
+  }
+  .score-label.on .score-pct {
+    color: var(--accent);
+    opacity: 1;
+    font-size: 17px;
+  }
+  .score-label.tie .score-pct {
+    color: var(--ink-soft);
+    opacity: 0.8;
+    font-style: italic;
+  }
+  .score-label .score-cn {
+    font-size: 11px;
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-top: 2px;
+    line-height: 1.2;
+    opacity: 0.7;
+  }
+  .score-label.on .score-cn { opacity: 1; }
+
+  .score-bar {
+    height: 22px;
+    background: var(--paper-warm);
+    position: relative;
+    border: 1px solid var(--ink);
+    display: flex;
+    overflow: hidden;
+  }
+  /* 中线marker */
+  .score-bar::before {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: -3px;
+    bottom: -3px;
+    width: 1px;
+    background: var(--ink);
+    z-index: 2;
+    transform: translateX(-50%);
+  }
+  .score-bar-left, .score-bar-right {
+    height: 100%;
+    background: var(--accent);
+    transition: width 1.2s cubic-bezier(.2,.8,.2,1);
+  }
+  .score-bar-left {
+    background: linear-gradient(to right, var(--accent) 0%, var(--accent-soft) 100%);
+  }
+  .score-bar-right {
+    background: linear-gradient(to right, var(--accent-soft) 0%, var(--accent) 100%);
+    opacity: 0.45;
+  }
+  /* 当左侧dominant时，左bar深色，右bar淡 */
+  .score-row.left-dom .score-bar-right { opacity: 0.25; }
+  .score-row.right-dom .score-bar-left { opacity: 0.25; }
+
+  /* 描述 */
+  .type-desc {
+    font-family: "Noto Serif SC", serif;
+    font-size: 17px;
+    line-height: 1.85;
+    color: var(--ink);
+    margin-bottom: 32px;
+  }
+  .type-desc::first-letter {
+    font-family: "Crimson Pro", serif;
+    font-size: 56px;
+    font-weight: 600;
+    color: var(--accent);
+    float: left;
+    line-height: 0.9;
+    margin: 8px 12px 0 0;
+    font-style: italic;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 32px;
+    margin: 40px 0;
+    padding: 32px;
+    background: var(--paper-warm);
+    border: 1px solid var(--rule);
+  }
+  @media (max-width: 600px) {
+    .info-grid { grid-template-columns: 1fr; }
+  }
+  .info-block-title {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 13px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .info-block-content {
+    font-family: "Noto Serif SC", serif;
+    font-size: 16px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .info-block-content em {
+    font-family: "Crimson Pro", serif;
+    color: var(--ink-soft);
+  }
+
+  .restart-btn {
+    background: transparent;
+    color: var(--ink);
+    border: 1.5px solid var(--ink);
+    padding: 16px 36px;
+    font-family: "Noto Sans SC", sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    cursor: pointer;
+    transition: all .3s;
+    margin-top: 32px;
+  }
+  .restart-btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* 诊断section */
+  .diagnostic-block {
+    margin-top: 40px;
+    padding: 16px 20px;
+    background: transparent;
+    border: 1px dashed var(--rule);
+    font-family: "Noto Sans SC", sans-serif;
+  }
+  .diagnostic-block summary {
+    cursor: pointer;
+    font-size: 13px;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+    user-select: none;
+    padding: 4px 0;
+  }
+  .diagnostic-block summary:hover {
+    color: var(--accent);
+  }
+  .diagnostic-block[open] summary {
+    margin-bottom: 16px;
+    color: var(--ink);
+  }
+  .diagnostic-content {
+    font-family: "Crimson Pro", "Courier New", monospace;
+    font-size: 13px;
+    line-height: 1.7;
+    color: var(--ink);
+  }
+  .diag-summary-bar {
+    display: flex;
+    gap: 24px;
+    flex-wrap: wrap;
+    padding: 12px 14px;
+    background: var(--paper-warm);
+    margin-bottom: 16px;
+    font-size: 12px;
+  }
+  .diag-summary-bar > span {
+    font-feature-settings: "tnum";
+  }
+  .diag-summary-bar strong {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .diag-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+  .diag-table th, .diag-table td {
+    text-align: left;
+    padding: 6px 8px;
+    border-bottom: 1px solid var(--rule);
+    vertical-align: top;
+  }
+  .diag-table th {
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-weight: 400;
+    border-bottom: 1px solid var(--ink);
+  }
+  .diag-table .ans-agree { color: #2d4a37; font-weight: 600; }
+  .diag-table .ans-neutral { color: var(--ink-soft); }
+  .diag-table .ans-disagree { color: var(--accent); font-weight: 600; }
+  .diag-table .ans-skip { color: #999; font-style: italic; }
+  .diag-q-text {
+    font-family: "Noto Sans SC", sans-serif;
+    color: var(--ink);
+    font-size: 11px;
+    max-width: 380px;
+  }
+  .diag-dim-tag {
+    font-family: "Crimson Pro", serif;
+    font-size: 11px;
+    color: var(--ink-soft);
+    letter-spacing: 0.05em;
+  }
+
+  .footer-note {
+    margin-top: 48px;
+    padding-top: 24px;
+    border-top: 1px solid var(--rule);
+    font-family: "Crimson Pro", serif;
+    font-style: italic;
+    font-size: 13px;
+    color: var(--ink-soft);
+    text-align: center;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes dropIn {
+    from { opacity: 0; transform: translateY(-30px) rotate(-5deg); }
+    to { opacity: 1; transform: translateY(0) rotate(0); }
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<div class="progress-rail"><div class="progress-fill" id="progressFill"></div></div>
+<div class="progress-text" id="progressText"></div>
+
+<!-- INTRO PAGE -->
+<div class="stage" id="introPage">
+  <div class="intro">
+    <div class="intro-eyebrow">— Thought Verification Zone —</div>
+    <h1 class="intro-title"><span class="accent">MBTI</span><span style="font-size:0.55em;font-weight:600;margin-left:8px;color:var(--ink);">（政治学版）</span></h1>
+    <p class="intro-subtitle">PoliSci-MBTI</p>
+    <div class="intro-rule"></div>
+    <div class="intro-body">
+      <p>这是一份32题的测试，测量你在四个政治维度上的倾向。每个维度都是一对相对的政治哲学立场——它们没有「正确答案」，只是描述你看待政治世界的不同方式。</p>
+      <p>请凭直觉作答，不要过度思考。完成后你会得到一个由四个字母组成的「政治类型」，以及对应的政治传统、思想家和真实国家案例。</p>
+    </div>
+    <div class="dimension-list">
+      <div class="dim-item">
+        <div class="dim-letters">E<span class="slash">/</span>I</div>
+        <div class="dim-name">Engagement / Isolation<br>对外参与 / 不干涉</div>
+      </div>
+      <div class="dim-item">
+        <div class="dim-letters">S<span class="slash">/</span>N</div>
+        <div class="dim-name">State / Nature<br>国家强制 / 自发秩序</div>
+      </div>
+      <div class="dim-item">
+        <div class="dim-letters">T<span class="slash">/</span>F</div>
+        <div class="dim-name">Technocracy / Folks<br>专家治理 / 民众决定</div>
+      </div>
+      <div class="dim-item">
+        <div class="dim-letters">J<span class="slash">/</span>P</div>
+        <div class="dim-name">Justice / Plurality<br>规则一致 / 承认差异</div>
+      </div>
+    </div>
+    <button class="start-btn" onclick="startQuiz()">开始测试</button>
+  </div>
+</div>
+
+<!-- QUESTION PAGE -->
+<div class="stage hidden" id="questionPage">
+  <div class="question-page">
+    <div class="q-meta">
+      <div class="q-number" id="qNumber">01</div>
+      <div class="q-divider"></div>
+      <div class="q-of"><span id="qTotal">/ 30</span></div>
+    </div>
+    <div class="q-text" id="qText"></div>
+    <div class="answers">
+      <button class="answer-btn agree" onclick="answer(1)">
+        <span class="marker">A.</span>
+        <span>同意</span>
+      </button>
+      <button class="answer-btn neutral" onclick="answer(0)">
+        <span class="marker">B.</span>
+        <span>中立 / 不确定</span>
+      </button>
+      <button class="answer-btn disagree" onclick="answer(-1)">
+        <span class="marker">C.</span>
+        <span>不同意</span>
+      </button>
+    </div>
+    <div class="nav-bar">
+      <button class="nav-btn" id="prevBtn" onclick="prevQuestion()">← 上一题</button>
+      <button class="nav-btn" onclick="restartQuiz()">重新开始</button>
+    </div>
+  </div>
+</div>
+
+<!-- RESULT PAGE -->
+<div class="stage hidden" id="resultPage">
+  <div class="result-page">
+    <div class="result-eyebrow">— Your PoliSci MBTI —</div>
+    <div class="type-display" id="typeDisplay"></div>
+    <div class="type-name" id="typeName"></div>
+    <div class="type-name-en" id="typeNameEn"></div>
+    <div class="tie-notice" id="tieNotice"></div>
+
+    <div class="scores-block">
+      <div class="scores-title">Dimension Scores · 四维度倾向</div>
+      <div id="scoresContainer"></div>
+    </div>
+
+    <div class="type-desc" id="typeDesc"></div>
+
+    <div class="info-grid">
+      <div class="info-block">
+        <div class="info-block-title">Key Thinkers · 代表思想家</div>
+        <div class="info-block-content" id="thinkers"></div>
+      </div>
+      <div class="info-block">
+        <div class="info-block-title">Real-world Case · 真实案例</div>
+        <div class="info-block-content" id="cases"></div>
+      </div>
+    </div>
+
+    <button class="restart-btn" onclick="restartQuiz()">重新测试</button>
+
+    <details class="diagnostic-block">
+      <summary>🔍 诊断信息 · 查看每题答题记录</summary>
+      <div class="diagnostic-content" id="diagnosticContent"></div>
+    </details>
+
+    <div class="footer-note">
+      WeAcademy 2026 · Thought Verification Zone<br>
+      Made by Ho
+    </div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// 题目数据
+// dim: 维度 ("EI" / "SN" / "TF" / "JP")
+// dir: 同意时倾向哪个字母 ("E"/"I"/"S"/"N"/"T"/"F"/"J"/"P")
+// ============================================================
+const QUESTIONS = [
+  // 1. EI - Forward E
+  { text: "一个国家应该派军队参与联合国维和行动，即使这跟自己国家的直接利益没关系。", dim: "EI", dir: "E" },
+  // 2. SN - Forward S
+  { text: "学校的纪律好不好，主要看老师管得严不严，而不是学生自己有没有自觉。", dim: "SN", dir: "S" },
+  // 3. TF - Forward T
+  { text: "应对气候变化的政策应该由科学家委员会制定，而不是交给全民公投。", dim: "TF", dir: "T" },
+  // 4. JP - Forward J
+  { text: "高考应该全国一张卷，不应该因为不同省份的教育条件不同而有不同的录取分数线。", dim: "JP", dir: "J" },
+  // 5. EI - Forward I
+  { text: "一个国家在国际事务上应该首先考虑自己的国家利益，其次才考虑全球责任。", dim: "EI", dir: "I" },
+  // 6. SN - Forward N
+  { text: "一个没有警察执勤的菜市场，往往比有警察站岗的地方还要井然有序。", dim: "SN", dir: "N" },
+  // 7. TF - Forward F
+  { text: "即使民众的选择可能是错的，他们也有权利做出这个选择。", dim: "TF", dir: "F" },
+  // 8. JP - Forward P
+  { text: "大学录取应该给来自偏远地区或弱势家庭的学生加分，因为他们起跑线本来就不一样。", dim: "JP", dir: "P" },
+  // 9. EI - Forward E
+  { text: "邻国发生大规模人道主义灾难时，本国就算自己经济困难，也应该接收难民、提供援助。", dim: "EI", dir: "E" },
+  // 10. SN - Reverse (同意=N)
+  { text: "如果完全没有法律和警察，绝大多数人还是会规规矩矩地生活。", dim: "SN", dir: "N" },
+  // 11. TF - Forward T
+  { text: "在重大经济决策上，听经济学家的话比听老百姓的更可能避免危机。", dim: "TF", dir: "T" },
+  // 12. JP - Forward J
+  { text: "\"法律面前人人平等\"意味着任何形式的\"加分\"或\"配额\"都是不公平的。", dim: "JP", dir: "J" },
+  // 13. EI - Forward I
+  { text: "加入国际组织和军事同盟会牵扯本国进入不必要的麻烦，不如保持独立。", dim: "EI", dir: "I" },
+  // 14. SN - Forward N
+  { text: "对于一个互相熟识的小社区，不需要太多规则也能很好地运转；规则越多反而越容易出现问题。", dim: "SN", dir: "N" },
+  // 15. TF - Forward F
+  { text: "即使专家们一致认为某个政策是错的，只要绝大多数民众支持，政府就应该执行。", dim: "TF", dir: "F" },
+  // 16. JP - Forward P
+  { text: "如果一个少数族群的传统文化跟国家通用的法律有冲突，应该给予一定的特殊豁免。", dim: "JP", dir: "P" },
+  // 17. EI - Forward E
+  { text: "一个强大的国家有责任去促进民主和人权，即使要在其他国家进行干预。", dim: "EI", dir: "E" },
+  // 18. SN - Forward S
+  { text: "学校如果取消了所有规章制度，校园会变得一团糟。", dim: "SN", dir: "S" },
+  // 19. TF - Forward T
+  { text: "老百姓常常被情绪和短期利益左右，重要决定还是应该让懂行的人来做。", dim: "TF", dir: "T" },
+  // 20. JP - Forward J
+  { text: "中考和高考应该全国按统一标准录取，不应该有地方学校的「加分名额」或「自主招生」。", dim: "JP", dir: "J" },
+  // 21. EI - 同意=I
+  { text: "本国青年应该把精力先放在国内的需求上，没必要专门跑到其他国家做志愿者、支教或扶贫。", dim: "EI", dir: "I" },
+  // 22. SN - 同意=S
+  { text: "一个公司如果没有清晰的层级和KPI考核，员工是不会自觉努力工作的。", dim: "SN", dir: "S" },
+  // 23. TF - Forward F
+  { text: "重大政策的最终决定权应该掌握在民选代表手里，而不是任命的技术官员手里。", dim: "TF", dir: "F" },
+  // 24. JP - Forward P
+  { text: "一个国家承认多种官方语言，比强制所有人学一种通用语，更能让国家团结。", dim: "JP", dir: "P" },
+  // 25. EI - Forward E
+  { text: "跟其他国家签长期同盟条约，对本国是利大于弊的。", dim: "EI", dir: "E" },
+  // 26. SN - Forward S
+  { text: "如果让人们完全自由地讨价还价、自己做决定，市场和社会会陷入混乱。", dim: "SN", dir: "S" },
+  // 27. TF - 同意=T
+  { text: "重大政策让普通市民投票决定，不如让懂行的专家做决定。", dim: "TF", dir: "T" },
+  // 28. JP - Forward J
+  { text: "政府发放福利时应该一视同仁，不应该因为家庭背景不同而给不同金额。", dim: "JP", dir: "J" },
+  // 29. EI - Forward I
+  { text: "与其花钱在外交、军事援助上，不如把钱花在本国老百姓身上。", dim: "EI", dir: "I" },
+  // 30. JP - 同意=P
+  { text: "当一个少数群体的传统习俗（比如某些宗教或民族的婚姻、教育习俗）跟现代法律冲突时，应当尊重这个群体的传统，而不是无条件强制法律。", dim: "JP", dir: "P" },
+  // 31. JP - Forward J（同意 = 机会平等优先 = J方向）
+  { text: "贫富差距太大不是一个社会的根本问题，只要每个人都有公平的机会向上流动。", dim: "JP", dir: "J" },
+  // 32. TF - Forward T（同意上限 = 暗含某些人不适合做决策 = T方向）
+  { text: "选举权和被选举权除了应该有年龄下限（比如18岁），也应该设置一个年龄上限（比如70岁）。", dim: "TF", dir: "T" }
+];
+
+// ============================================================
+// 16种类型描述
+// ============================================================
+const TYPES = {
+  ESTJ: {
+    name: `全球秩序建造者`,
+    nameEn: `The Global Order-Builder`,
+    desc: `你相信一个负责任的强国应该走出国门，用清晰的规则和专业的判断来塑造国际秩序。秩序需要权威来维持，决策需要专家来制定，而正义意味着同一套规则适用于所有人。你眼中的世界需要有人来「管」——而那个人最好是有能力、有原则、有担当的国家。`,
+    thinkers: `<strong>伍德罗·威尔逊</strong> · 国际秩序的建构者<br><strong>亨利·基辛格</strong> · 现实主义大战略家`,
+    cases: `<strong>冷战时期的美国</strong>——通过马歇尔计划、北约、布雷顿森林体系输出一套以自身为中心的全球秩序。技术官僚（国务院、财政部）主导，同盟体系扩展，规则统一适用。`
+  },
+  ESTP: {
+    name: `务实的多元干预派`,
+    nameEn: `The Pragmatic Pluralist`,
+    desc: `你认为大国必须走向世界，秩序需要权威保障，专家应当主导决策——但你拒绝「一刀切」。你承认不同民族、不同地区有不同的需求和历史，治理的艺术在于既维持统一框架，又灵活回应差异。你欣赏制度，但更欣赏会变通的制度。`,
+    thinkers: `<strong>托克维尔</strong> · 民主中的多样性<br><strong>让·莫内</strong> · 欧洲一体化建构者`,
+    cases: `<strong>欧盟</strong>——技术官僚（欧盟委员会）主导决策，对外深度参与全球事务，内部既有统一规则又承认成员国差异。法国式中央集权但承认地方语言文化的传统也属此型。`
+  },
+  ESFJ: {
+    name: `民粹干预派`,
+    nameEn: `The Populist Interventionist`,
+    desc: `你相信国家有义务走向世界，但这个使命应当由人民——而非精英——来定义。你看重秩序，但秩序的合法性来自人民的共识，而非专家的论证。法律应当一视同仁，但目的是保护「我们」这个共同体。这是一种带有道德激情的、为民众而战的干预主义。`,
+    thinkers: `<strong>富兰克林·罗斯福</strong> · 新政与「四大自由」的倡导者<br><strong>威廉·詹宁斯·布莱恩</strong> · 民粹政治先驱`,
+    cases: `<strong>新政时期的美国</strong>——大规模国家干预服务于普通工人和农民，对外参与二战重塑世界，但所有政策都诉诸「普通美国人」的语言而非精英话语。`
+  },
+  ESFP: {
+    name: `包容性干预派`,
+    nameEn: `The Inclusive Interventionist`,
+    desc: `你相信国家应当积极参与国际事务，秩序需要稳固的制度来维护，但合法性最终来自人民——而且要承认这个「人民」本身就是多元的。你眼中的好政府是温暖的、包容的、面向所有群体的：原住民、移民、少数族群都应该有自己的位置。`,
+    thinkers: `<strong>查尔斯·泰勒</strong> · 多元文化主义<br><strong>金里卡</strong> · 少数族群权利理论`,
+    cases: `<strong>加拿大</strong>——积极的国际维和参与，强健的福利国家，宪法明文承认双语和原住民权利。多元文化主义被写入国家身份。`
+  },
+  ENTJ: {
+    name: `全球化技术精英`,
+    nameEn: `The Global Technocrat`,
+    desc: `你相信开放、连接、流动是国家繁荣的来源。秩序最好由市场和专业知识自发形成——政府的角色是设定规则然后退后。你信任专家、信任理性分析，相信平等意味着同一套规则、同一个市场、同一种竞争。这是一种带有强烈知识分子气质的全球化愿景。`,
+    thinkers: `<strong>米尔顿·弗里德曼</strong> · 自由市场经济学<br><strong>玛格丽特·撒切尔</strong> · 「没有社会，只有个人」`,
+    cases: `<strong>撒切尔时代的英国</strong>——大规模私有化、放松管制、依赖经济学家治国，深度参与全球贸易和金融体系，反对任何形式的「特殊照顾」。`
+  },
+  ENTP: {
+    name: `自由主义国际派`,
+    nameEn: `The Liberal Internationalist`,
+    desc: `你拥抱国际参与，相信自发的秩序优于强制的秩序，认同专家的判断——但你也敏锐地意识到不同群体的处境差异。你是那种相信「自由市场+多元社会」可以共存的人：让贸易和思想自由流动，让不同文化各得其所。`,
+    thinkers: `<strong>约翰·斯图亚特·密尔</strong> · 自由主义经典作家<br><strong>阿马蒂亚·森</strong> · 发展即自由`,
+    cases: `<strong>19世纪的英国</strong>——全球贸易帝国、自由放任经济、专业的文官系统，同时（在帝国后期）发展出对殖民地不同治理方式的承认。`
+  },
+  ENFJ: {
+    name: `民主输出主义者`,
+    nameEn: `The Democracy Exporter`,
+    desc: `你相信国家有道德使命——把自由和民主带向世界。秩序应当来自社会内部的共识而非自上而下的强制，决策应当由人民来做（而非专家），而且法律应当对所有人一视同仁。你眼中的世界是一个可以变得更好的世界，而每个民主国家都有责任推动这种改善。`,
+    thinkers: `<strong>约翰·杜威</strong> · 民主作为生活方式<br><strong>伍德罗·威尔逊</strong> · 「让世界对民主安全」`,
+    cases: `<strong>21世纪的美国</strong>——以「民主推广」作为外交话语，反对威权体制，强调普世人权（统一标准），同时国内政治也呈现自下而上的民粹动员色彩。`
+  },
+  ENFP: {
+    name: `进步国际主义者`,
+    nameEn: `The Progressive Internationalist`,
+    desc: `你相信国家应当深度参与全球合作——尤其是气候、人权、发展等议题。你倾向于自下而上的秩序：相信社群、相信公民社会、相信普通人的判断。你也强烈承认差异：不同民族、不同性别、不同身份的人都需要被特别关照。这是一种温暖的、面向未来的国际主义。`,
+    thinkers: `<strong>哈贝马斯</strong> · 沟通理性与公共领域<br><strong>玛莎·努斯鲍姆</strong> · 能力路径与全球正义`,
+    cases: `<strong>北欧国家（瑞典、挪威）</strong>——慷慨的对外援助、深度参与联合国体系、自下而上的协商民主、强烈的少数群体权利保护。同时活跃于国际气候和人权议程。`
+  },
+  ISTJ: {
+    name: `威权技术官僚`,
+    nameEn: `The Authoritarian Technocrat`,
+    desc: `你相信一个国家最重要的是把自己的事情办好。秩序需要国家来强制建立，决策需要专家来理性制定，规则要清晰且对所有人一致适用。你不太相信民粹的智慧，也不太相信「自发」的秩序——历史上太多混乱都来自放任。一个有能力、有纪律、有规划的国家就是最好的国家。`,
+    thinkers: `<strong>韩非子</strong> · 法家思想<br><strong>马克斯·韦伯</strong> · 官僚制理性`,
+    cases: `<strong>新加坡</strong>——精英技术官僚（PAP和文官系统）主导决策，强势国家维持社会秩序，对外采取务实而非干预性的外交政策，法律严格统一适用所有公民。`
+  },
+  ISTP: {
+    name: `稳健的多民族威权`,
+    nameEn: `The Pluralist Strongman`,
+    desc: `你相信内部稳定优先于对外扩张，秩序需要强政府来维护，专家比群众更适合决策——但你承认你的国家本身就是多民族、多文化的，统治需要承认这种现实。你欣赏的是那种「严而不僵」的治理：规则清晰，但也给不同群体留出位置。`,
+    thinkers: `<strong>李光耀</strong> · 亚洲价值观与多元威权<br><strong>马哈蒂尔</strong> · 发展型国家与族群平衡`,
+    cases: `<strong>马来西亚</strong>——专业官僚体系主导经济发展，强政府维持社会秩序，外交上保持不结盟，但承认马来人、华人、印度人不同的法律地位和文化权利。`
+  },
+  ISFJ: {
+    name: `保守民族国家守护者`,
+    nameEn: `The Conservative Nation-Keeper`,
+    desc: `你相信一个国家最重要的是保护自己的人民和文化传统。秩序应当由权威来维持，但权威需要倾听人民的声音；法律应当一视同仁，因为这就是公民身份的意义。你不热衷于对外干预，也不热衷于激进改革——稳定地、缓慢地、有尊严地做好一个民族国家就够了。`,
+    thinkers: `<strong>孔子</strong> · 礼治与社会和谐<br><strong>埃德蒙·伯克</strong> · 保守主义传统`,
+    cases: `<strong>战后日本</strong>——和平宪法下的非干预外交，强势的国家官僚体系，统一的国民身份认同，缓慢但稳定的政策连续性。`
+  },
+  ISFP: {
+    name: `多元保守主义者`,
+    nameEn: `The Pluralist Conservative`,
+    desc: `你相信你的国家应该专注于自己内部的事务，秩序需要权威来维护，普通公民的声音很重要——而且你的国家本身就是由多个独特的社群构成的，每一个都值得被尊重。你欣赏地方自治、文化多样性、和那种「我们都不一样，但我们都属于这里」的归属感。`,
+    thinkers: `<strong>迈克尔·桑德尔</strong> · 共同体主义<br><strong>查尔斯·泰勒</strong> · 承认的政治`,
+    cases: `<strong>瑞士</strong>——极度的中立外交、强势的州（canton）治理、深厚的直接民主传统但又通过议会民主运作、四种官方语言并存。`
+  },
+  INTJ: {
+    name: `自由意志精英主义者`,
+    nameEn: `The Libertarian Elitist`,
+    desc: `你相信政府应当尽可能小、尽可能不干预——无论是国内还是国外。秩序最好由市场和社会自发形成，决策应当交给那些真正懂的人，而法律应当统一适用所有人，不管你是谁。你对集体主义和民粹都保持距离：自由意味着让每个人按照自己的能力和选择生活。`,
+    thinkers: `<strong>罗伯特·诺齐克</strong> · 最小国家与持有正义<br><strong>艾茵·兰德</strong> · 客观主义`,
+    cases: `<strong>殖民晚期的香港</strong>——极简政府、自由放任经济、由专业精英（财政司、行政会议）治理、严格的法治传统、对外不卷入大国政治。`
+  },
+  INTP: {
+    name: `自由意志多元主义者`,
+    nameEn: `The Libertarian Pluralist`,
+    desc: `你相信小政府、自发秩序、专业决策——但你不接受「一视同仁」是真正的平等。在你看来，让每个人真正自由地做自己，恰恰需要承认大家起点不同、文化不同、需求不同。这是一种知识分子气质浓厚的、温和的自由主义：少管，但要细致地少管。`,
+    thinkers: `<strong>哈耶克</strong> · 自发秩序与多元社会<br><strong>以赛亚·伯林</strong> · 价值多元主义`,
+    cases: `<strong>建国早期的美国</strong>——联邦政府权力极小、各州自治、自由市场、对外采取华盛顿式的「避免缠绕同盟」，同时承认各殖民地不同的法律传统和宗教文化。`
+  },
+  INFJ: {
+    name: `公民共和主义者`,
+    nameEn: `The Civic Republican`,
+    desc: `你相信好的政治来自公民自己——既不是来自外国干预，也不是来自专家精英。社会的秩序最好从公民之间的相互信任和共识中自然涌现，而所有公民应当作为平等的个体面对法律。你心目中的理想是一个紧密、自治、平等的政治共同体——不大，但是真实的。`,
+    thinkers: `<strong>让-雅克·卢梭</strong> · 公意与人民主权<br><strong>汉娜·阿伦特</strong> · 政治作为公共行动`,
+    cases: `<strong>建国时期的瑞士联邦</strong>——州民大会式直接民主、最小化的中央政府、严格的中立外交、统一的公民身份。某种程度上，雅典城邦也是这种类型的古代原型。`
+  },
+  INFP: {
+    name: `无政府社群主义者`,
+    nameEn: `The Anarcho-Communitarian`,
+    desc: `你怀疑权力，无论它来自国家、专家还是大国。你相信人们如果被给予空间，会自发形成有意义的社群和秩序；你相信普通人的智慧；你也强烈感受到不同群体（移民、少数族裔、性少数等）有它们独特的存在方式，需要被特别保护。你的政治理想是一种温柔的、自下而上的、多样的社会。`,
+    thinkers: `<strong>克鲁泡特金</strong> · 互助论<br><strong>大卫·格雷伯</strong> · 民主人类学`,
+    cases: `<strong>北欧式社会民主主义的左翼版本</strong>——强烈的地方自治、合作社传统、对原住民和少数族群的承认、和平主义的外交立场。冰岛和某些北欧地方社区是较接近的现实近似。`
+  }
+};
+
+// ============================================================
+// 状态管理
+// ============================================================
+let currentQ = 0;
+let answers = new Array(QUESTIONS.length).fill(null);
+
+function startQuiz() {
+  document.getElementById("introPage").classList.add("hidden");
+  document.getElementById("questionPage").classList.remove("hidden");
+  currentQ = 0;
+  renderQuestion();
+}
+
+function renderQuestion() {
+  const q = QUESTIONS[currentQ];
+  document.getElementById("qNumber").textContent = String(currentQ + 1).padStart(2, "0");
+  document.getElementById("qTotal").textContent = `/ ${QUESTIONS.length}`;
+  document.getElementById("qText").textContent = q.text;
+
+  // 进度条
+  const pct = (currentQ / QUESTIONS.length) * 100;
+  document.getElementById("progressFill").style.width = pct + "%";
+  document.getElementById("progressText").textContent = `${currentQ + 1} / ${QUESTIONS.length}`;
+
+  // selected state
+  document.querySelectorAll(".answer-btn").forEach(b => b.classList.remove("selected"));
+  if (answers[currentQ] !== null) {
+    const map = { 1: 0, 0: 1, "-1": 2 };
+    const idx = map[answers[currentQ]];
+    document.querySelectorAll(".answer-btn")[idx].classList.add("selected");
+  }
+
+  // 上一题按钮
+  document.getElementById("prevBtn").disabled = currentQ === 0;
+
+  // 顶部回到开头
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function answer(value) {
+  answers[currentQ] = value;
+  // 短延迟后跳到下一题，让用户看到选中状态
+  document.querySelectorAll(".answer-btn").forEach(b => b.classList.remove("selected"));
+  const map = { 1: 0, 0: 1, "-1": 2 };
+  document.querySelectorAll(".answer-btn")[map[value]].classList.add("selected");
+
+  setTimeout(() => {
+    if (currentQ < QUESTIONS.length - 1) {
+      currentQ++;
+      renderQuestion();
+    } else {
+      showResult();
+    }
+  }, 280);
+}
+
+function prevQuestion() {
+  if (currentQ > 0) {
+    currentQ--;
+    renderQuestion();
+  }
+}
+
+function restartQuiz() {
+  currentQ = 0;
+  answers = new Array(QUESTIONS.length).fill(null);
+  document.getElementById("questionPage").classList.add("hidden");
+  document.getElementById("resultPage").classList.add("hidden");
+  document.getElementById("introPage").classList.remove("hidden");
+  document.getElementById("progressFill").style.width = "0%";
+  document.getElementById("progressText").textContent = "";
+}
+
+// ============================================================
+// 计算结果
+// ============================================================
+function computeResult() {
+  // 每个维度的score：正分 -> 第一字母 (E/S/T/J), 负分 -> 第二字母 (I/N/F/P)
+  const scores = { EI: 0, SN: 0, TF: 0, JP: 0 };
+  // 每个维度total可能的题数（用于normalize）
+  const counts = { EI: 0, SN: 0, TF: 0, JP: 0 };
+
+  QUESTIONS.forEach((q, i) => {
+    const ans = answers[i] ?? 0; // 中立=0
+    counts[q.dim]++;
+    // dir表示同意时倾向哪个字母
+    // 第一字母（E/S/T/J） => +
+    // 第二字母（I/N/F/P） => -
+    const firstLetter = q.dim[0]; // E, S, T, J
+    const sign = (q.dir === firstLetter) ? 1 : -1;
+    scores[q.dim] += ans * sign;
+  });
+
+  const type =
+    (scores.EI >= 0 ? "E" : "I") +
+    (scores.SN >= 0 ? "S" : "N") +
+    (scores.TF >= 0 ? "T" : "F") +
+    (scores.JP >= 0 ? "J" : "P");
+
+  return { type, scores, counts };
+}
+
+function showResult() {
+  document.getElementById("questionPage").classList.add("hidden");
+  document.getElementById("resultPage").classList.remove("hidden");
+  document.getElementById("progressFill").style.width = "100%";
+  document.getElementById("progressText").textContent = "✓ 完成";
+
+  const { type, scores, counts } = computeResult();
+  const info = TYPES[type];
+
+  // 显示type字母（一个一个显示）
+  // tie检测：哪些维度是平局
+  const dimKeys = ["EI", "SN", "TF", "JP"];
+  const ties = dimKeys.map(k => scores[k] === 0);
+
+  const typeDisplay = document.getElementById("typeDisplay");
+  typeDisplay.innerHTML = "";
+  type.split("").forEach((letter, i) => {
+    const span = document.createElement("span");
+    span.className = "letter" + (ties[i] ? " tie" : "");
+    span.textContent = letter;
+    if (ties[i]) {
+      span.title = "这个维度是平局，结果可任意倾向。";
+    }
+    typeDisplay.appendChild(span);
+  });
+
+  document.getElementById("typeName").textContent = info.name;
+  document.getElementById("typeNameEn").textContent = info.nameEn;
+
+  // tie notice
+  const tieNotice = document.getElementById("tieNotice");
+  const tieDimensions = [];
+  if (ties[0]) tieDimensions.push("E/I");
+  if (ties[1]) tieDimensions.push("S/N");
+  if (ties[2]) tieDimensions.push("T/F");
+  if (ties[3]) tieDimensions.push("J/P");
+  if (tieDimensions.length > 0) {
+    tieNotice.textContent = `※ 你在 ${tieDimensions.join("、")} 维度上处于平衡状态——这意味着你对该议题尚未形成明显偏好，结果中显示的字母仅为占位。`;
+    tieNotice.style.display = "block";
+  } else {
+    tieNotice.style.display = "none";
+  }
+  document.getElementById("typeDesc").innerHTML = info.desc;
+  document.getElementById("thinkers").innerHTML = info.thinkers;
+  document.getElementById("cases").innerHTML = info.cases;
+
+  // 渲染分数条
+  renderScores(scores, counts, type);
+
+  // 渲染诊断信息
+  renderDiagnostics(scores, counts, type);
+
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
+function renderDiagnostics(scores, counts, type) {
+  const container = document.getElementById("diagnosticContent");
+
+  // 统计每种answer的数量
+  let countAgree = 0, countNeutral = 0, countDisagree = 0, countSkip = 0;
+  answers.forEach(a => {
+    if (a === 1) countAgree++;
+    else if (a === -1) countDisagree++;
+    else if (a === 0) countNeutral++;
+    else countSkip++;
+  });
+
+  // Build summary bar
+  const summary = `
+    <div class="diag-summary-bar">
+      <span><strong>${type}</strong> · 总${QUESTIONS.length}题</span>
+      <span>同意 A: <strong>${countAgree}</strong></span>
+      <span>中立 B: <strong>${countNeutral}</strong></span>
+      <span>不同意 C: <strong>${countDisagree}</strong></span>
+      ${countSkip > 0 ? `<span style="color:#999;">未答: ${countSkip}</span>` : ''}
+    </div>
+    <div class="diag-summary-bar">
+      <span>EI: <strong>${scores.EI >= 0 ? 'E ' + scores.EI : 'I ' + (-scores.EI)}</strong>/${counts.EI}</span>
+      <span>SN: <strong>${scores.SN >= 0 ? 'S ' + scores.SN : 'N ' + (-scores.SN)}</strong>/${counts.SN}</span>
+      <span>TF: <strong>${scores.TF >= 0 ? 'T ' + scores.TF : 'F ' + (-scores.TF)}</strong>/${counts.TF}</span>
+      <span>JP: <strong>${scores.JP >= 0 ? 'J ' + scores.JP : 'P ' + (-scores.JP)}</strong>/${counts.JP}</span>
+    </div>
+  `;
+
+  // Build per-question table
+  let rows = '';
+  QUESTIONS.forEach((q, i) => {
+    const ans = answers[i];
+    let ansLabel, ansClass;
+    if (ans === 1) { ansLabel = "A 同意"; ansClass = "ans-agree"; }
+    else if (ans === 0) { ansLabel = "B 中立"; ansClass = "ans-neutral"; }
+    else if (ans === -1) { ansLabel = "C 不同意"; ansClass = "ans-disagree"; }
+    else { ansLabel = "未答"; ansClass = "ans-skip"; }
+
+    // 计算这题对该方向贡献多少分
+    const sign = (q.dir === q.dim[0]) ? 1 : -1;
+    const contribution = (ans ?? 0) * sign;
+    const contribLetter = contribution > 0 ? q.dim[0] : (contribution < 0 ? q.dim[1] : '·');
+    const contribDisplay = contribution === 0 ? '0' : `${contribLetter} ${Math.abs(contribution) > 0 ? '+1' : ''}`;
+
+    rows += `
+      <tr>
+        <td>${i + 1}</td>
+        <td><span class="diag-dim-tag">${q.dim} → ${q.dir}</span></td>
+        <td class="diag-q-text">${q.text}</td>
+        <td class="${ansClass}">${ansLabel}</td>
+        <td>${contribDisplay}</td>
+      </tr>
+    `;
+  });
+
+  const table = `
+    <table class="diag-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>维度</th>
+          <th>题目</th>
+          <th>你的答案</th>
+          <th>得分贡献</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  container.innerHTML = summary + table;
+}
+
+function renderScores(scores, counts, type) {
+  const dims = [
+    { key: `EI`, left: { l: `E`, cn: `对外参与` }, right: { l: `I`, cn: `不干涉` } },
+    { key: `SN`, left: { l: `S`, cn: `国家强制` }, right: { l: `N`, cn: `自发秩序` } },
+    { key: `TF`, left: { l: `T`, cn: `专家治理` }, right: { l: `F`, cn: `民众决定` } },
+    { key: `JP`, left: { l: `J`, cn: `规则一致` }, right: { l: `P`, cn: `承认差异` } }
+  ];
+
+  const container = document.getElementById(`scoresContainer`);
+  container.innerHTML = ``;
+
+  dims.forEach((d, idx) => {
+    const score = scores[d.key];
+    const max = counts[d.key];
+
+    // 方案B: 把score normalize到100%框架
+    // score范围 [-max, +max]，转换到 [0, 100]
+    // 正分越大 → leftPct越高，反之 rightPct越高
+    const leftPct = Math.round((score + max) / (2 * max) * 100);
+    const rightPct = 100 - leftPct;
+
+    // 判断是否为平局（tie）
+    const isTie = score === 0;
+    const isLeftDominant = score > 0;
+    const isRightDominant = score < 0;
+
+    const row = document.createElement(`div`);
+    row.className = `score-row` + (isLeftDominant ? ` left-dom` : (isRightDominant ? ` right-dom` : ` tie`));
+    row.innerHTML = `
+      <div class="score-label left ${isLeftDominant ? 'on' : (isTie ? 'tie' : 'dim')}">
+        <span class="letter-big">${d.left.l}</span>
+        <div class="score-pct">${leftPct}%</div>
+        <div class="score-cn">${d.left.cn}</div>
+      </div>
+      <div class="score-bar">
+        <div class="score-bar-left" style="width:${leftPct}%"></div>
+        <div class="score-bar-right" style="width:${rightPct}%"></div>
+      </div>
+      <div class="score-label right ${isRightDominant ? 'on' : (isTie ? 'tie' : 'dim')}">
+        <span class="letter-big">${d.right.l}</span>
+        <div class="score-pct">${rightPct}%</div>
+        <div class="score-cn">${d.right.cn}</div>
+      </div>
+    `;
+    container.appendChild(row);
+
+    // 动画延迟 - 让条形图从中间向两边展开
+    const leftFill = row.querySelector(`.score-bar-left`);
+    const rightFill = row.querySelector(`.score-bar-right`);
+    leftFill.style.width = `50%`;
+    rightFill.style.width = `50%`;
+    setTimeout(() => {
+      leftFill.style.width = leftPct + `%`;
+      rightFill.style.width = rightPct + `%`;
+    }, 300 + idx * 150);
+  });
+}
+</script>
+
+</body>
+</html>
